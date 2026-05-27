@@ -31,5 +31,12 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greatindiancompany/ai-study-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/greatindiancompany/ai-study-platform/issues"
   }
 }

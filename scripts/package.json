@@ -12,5 +12,13 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.3.1"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greatindiancompany/ai-study-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/greatindiancompany/ai-study-platform/issues"
   }
 }

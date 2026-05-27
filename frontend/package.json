@@ -26,5 +26,13 @@
     "@tailwindcss/typography": "^0.5.10",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greatindiancompany/ai-study-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/greatindiancompany/ai-study-platform/issues"
   }
 }

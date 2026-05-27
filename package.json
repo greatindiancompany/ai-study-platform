@@ -2,5 +2,15 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
     "pg": "^8.16.3"
+  },
+  "name": "ai-study-platform",
+  "license": "MIT",
+  "description": "An auth-enabled branch of the inspir AI study platform with student workflows, memory, tools, and parent controls.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greatindiancompany/ai-study-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/greatindiancompany/ai-study-platform/issues"
   }
 }
