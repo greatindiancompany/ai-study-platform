@@ -1,25 +1,25 @@
-# Code of Conduct
+# Code Of Conduct
 
-This project should be a place where people can do good work together.
+This project welcomes contributors who want to make learning software clearer, safer, and more useful.
 
-## Our Standard
+## Expected Behavior
 
-We expect contributors to:
+- Be direct, respectful, and constructive.
+- Assume good intent, but be precise about risks and bugs.
+- Keep discussion focused on the work.
+- Make space for people with different backgrounds, skill levels, and perspectives.
 
-- Be respectful when disagreeing.
-- Give feedback that is specific and kind.
-- Welcome beginners and explain context where possible.
-- Keep discussions focused on the work.
-- Respect privacy and avoid sharing personal data.
+## Unacceptable Behavior
 
-Unacceptable behavior includes harassment, insults, intimidation, discrimination, sexualized language, doxxing, spam, and deliberately disruptive conduct.
+- Harassment, threats, discrimination, or personal attacks.
+- Sharing private user data, secrets, or sensitive reports publicly.
+- Derailing technical discussions with repeated bad-faith arguments.
+- Using the project or community channels for spam.
+
+## Reporting
+
+Report conduct concerns privately to the repository owner. Security-sensitive concerns should follow [SECURITY.md](SECURITY.md).
 
 ## Enforcement
 
-Maintainers may remove comments, close issues, block users, or reject contributions that violate this code of conduct.
-
-If you see behavior that makes the project less safe or welcoming, contact the repository owner privately.
-
-## Spirit
-
-The goal is not to make conversation sterile. The goal is to make it possible for people to build useful things together.
+Maintainers may remove comments, close issues, block users, or limit participation when behavior harms the project or community.

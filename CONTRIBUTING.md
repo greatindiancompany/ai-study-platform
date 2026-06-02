@@ -1,57 +1,86 @@
-# Contributing to inspir AI Study Platform
+# Contributing To inspir AI Study Platform
 
-Thank you for wanting to help.
+Thanks for helping improve inspir. This project is most useful when it is clear, safe, fast, and genuinely helpful for learners.
 
-This project exists because useful software gets better when people can understand it, run it, question it, and improve it. Contributions are welcome from engineers, designers, educators, operators, writers, testers, and curious users.
+## Before You Start
 
-## How to Contribute
-
-1. Open an issue for bugs, ideas, accessibility problems, documentation gaps, or confusing behavior.
-2. Keep pull requests focused and easy to review.
-3. Include screenshots or short recordings for UI changes.
-4. Include reproduction steps for bugs.
-5. Run the checks before asking for review.
+- Read the README and run the app locally.
+- Check existing issues and recent PRs.
+- Keep your change focused on one problem or feature.
+- Do not commit secrets, local env files, production data, screenshots with private content, or generated dependency folders.
 
 ## Local Setup
 
+Backend:
+
 ```bash
-cd frontend && npm install
-cd ../backend && npm install
+cd backend
+cp .env.example .env
+npm install
 npm run dev
 ```
 
-## Checks
+Frontend:
 
 ```bash
-cd frontend && npm run build
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
 ```
 
-## Pull Request Expectations
+## Quality Checks
 
-Please include:
+Run the checks that match your change:
+
+```bash
+cd frontend
+npm run build
+npm run lint
+```
+
+For backend work, start the API and confirm the health endpoint:
+
+```bash
+cd backend
+npm start
+curl http://localhost:3000/api/health
+```
+
+## Pull Request Checklist
+
+Include:
 
 - What changed.
 - Why it changed.
 - How it was tested.
-- Screenshots for visual changes.
-- Any migration, environment, deployment, or data notes.
+- Screenshots or a short recording for UI changes.
+- Any schema, environment, deployment, or data notes.
+- Any known limitations or follow-up work.
 
-## Areas That Need Care
+## Product Standards
 
-- Product clarity: make the experience easier to understand.
-- Accessibility: keyboard navigation, semantic markup, contrast, and screen reader support.
-- Reliability: tests, validation, error states, and deployment hygiene.
-- Security: keep secrets server-side and avoid logging private user data.
-- Documentation: help the next contributor build context quickly.
+- Make tools feel complete: loading, empty, error, success, and unauthenticated states all matter.
+- Keep the student workflow obvious. A user should know what to do next without reading docs.
+- Prefer accessible components: semantic markup, visible focus states, keyboard support, and readable contrast.
+- Keep AI outputs explainable and recoverable. Show helpful failure messages when provider calls fail.
+- Avoid adding dependencies unless they remove real complexity.
 
-## Code Style
+## Security Expectations
 
-- Prefer the patterns already used in the repository.
-- Keep changes scoped.
-- Avoid new dependencies unless they remove real complexity.
-- Add comments only where they explain non-obvious behavior.
-- Never commit real secrets, production data, provider keys, or private user content.
+- Keep Anthropic, Supabase, JWT, OAuth, and deployment credentials out of git.
+- Do not expose service-role keys to the frontend.
+- Do not log private student content, raw tokens, or provider secrets.
+- Treat uploaded study material as private user content.
+
+## Coding Style
+
+- Follow existing file and route patterns.
+- Keep changes scoped to the relevant tool or workflow.
+- Prefer small helpers over broad rewrites.
+- Add comments only where they clarify non-obvious behavior.
+- If a tool needs persistent data, include the matching SQL schema update.
 
 ## Community
 
-Be generous with context. Assume people are here because they care about making the project better.
+Be practical, kind, and specific. Good reviews explain risks and tradeoffs without making the work feel mysterious.

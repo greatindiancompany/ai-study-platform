@@ -1,67 +1,157 @@
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load env from the backend directory so local dev, PM2, and deployment runners
+// can start the API from different working directories.
+dotenv.config({ path: join(__dirname, '.env.local') });
+dotenv.config({ path: join(__dirname, '.env') });
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import chatRoutes from './routes/chat.js';
+import multer from 'multer';
+import quizRoutes from './routes/quiz.js';
 import authRoutes from './routes/auth.js';
-import studentRoutes from './routes/student.js';
-import parentRoutes from './routes/parent.js';
+import forumRoutes from './routes/forum.js';
+import citationRoutes from './routes/citation.js';
+import cornellNotesRoutes from './routes/cornellNotes.js';
+import streaksRoutes from './routes/streaks.js';
+import doubtRoutes from './routes/doubt.js';
+import waitlistRoutes from './routes/waitlist.js';
+import userRoutes from './routes/user.js';
+import summarizerRoutes from './routes/summarizerRoutes.js';
+import studyGuideRoutes from './routes/studyGuideRoutes.js';
+import flashcardRoutes from './routes/flashcardRoutes.js';
+import mathSolverRoutes from './routes/mathSolverRoutes.js';
+import mindMapRoutes from './routes/mindMapRoutes.js';
+import conceptMapRoutes from './routes/conceptMapRoutes.js';
+import practiceTestRoutes from './routes/practiceTestRoutes.js';
+import worksheetRoutes from './routes/worksheetRoutes.js';
+import productivityRoutes from './routes/productivity.js';
+import groupTimerRoutes from './routes/groupTimer.js';
+import audioRoutes from './routes/audio.js';
+import goalsRoutes from './routes/goals.js';
+import analyticsRoutes from './routes/analytics.js';
+import gamificationRoutes from './routes/gamification.js';
+import organizationRoutes from './routes/organization.js';
+import socialRoutes from './routes/social.js';
 
-dotenv.config();
+// Guard against stdout/stderr EPIPE when the log sink closes unexpectedly (keeps server alive)
+const handlePipeError = (err) => {
+  if (err.code !== 'EPIPE') throw err;
+};
+process.stdout.on('error', handlePipeError);
+process.stderr.on('error', handlePipeError);
+
+// Validate critical environment variables
+const requiredEnvVars = ['ANTHROPIC_API_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error('ERROR: Missing required environment variables:');
+  missingEnvVars.forEach(varName => console.error(`  - ${varName}`));
+  console.error('\nPlease set these variables in your .env file');
+  process.exit(1);
+}
+
+// Validate JWT_SECRET is strong enough
+if (process.env.JWT_SECRET.length < 32) {
+  console.error('ERROR: JWT_SECRET must be at least 32 characters long for security');
+  console.error('Current length:', process.env.JWT_SECRET.length);
+  process.exit(1);
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn(
+    'WARN: SUPABASE_SERVICE_ROLE_KEY is not set. Some features using RLS-protected tables may fail with 503 until this is configured.'
+  );
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
-// Trust proxy (behind nginx)
-app.set('trust proxy', true);
+// Trust the first proxy so req.ip is derived correctly when behind a reverse proxy (e.g. Nginx/Cloudflare),
+// and to prevent express-rate-limit from throwing ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+if (process.env.TRUST_PROXY !== 'false') {
+  app.set('trust proxy', 1);
+}
 
-// Detailed request logging middleware
-app.use((req, res, next) => {
-  console.log(`\n📥 ${new Date().toISOString()} - ${req.method} ${req.url}`);
-  console.log(`   Origin: ${req.headers.origin || 'none'}`);
-  console.log(`   User-Agent: ${req.headers['user-agent']?.substring(0, 50)}...`);
-  next();
-});
+// CORS configuration - only allow requests from frontend
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  ...(process.env.ADDITIONAL_ORIGINS ? process.env.ADDITIONAL_ORIGINS.split(',').map(o => o.trim()) : []),
+  'https://quiz.inspir.uk', // Deployed frontend
+  'http://localhost:5173', // Dev frontend
+  'http://127.0.0.1:5173', // Dev frontend
+  'http://localhost:3000', // Dev testing
+  'http://127.0.0.1:3000' // Dev testing
+].filter(Boolean);
 
-// CORS - Allow all origins for now
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
-
-// Health check
-app.get('/health', (req, res) => {
-  console.log('✅ Health check passed');
-  res.json({ status: 'ok', message: 'inspir API is running' });
-});
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
+app.use('/api/quiz', quizRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/parents', parentRoutes);
-app.use('/api/chat', chatRoutes);
+app.use('/api/forum', forumRoutes);
+app.use('/api/citations', citationRoutes);
+app.use('/api/cornell-notes', cornellNotesRoutes);
+app.use('/api/streaks', streaksRoutes);
+app.use('/api/doubt', doubtRoutes);
+app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/summarizer', summarizerRoutes);
+app.use('/api/study-guides', studyGuideRoutes);
+app.use('/api/flashcards', flashcardRoutes);
+app.use('/api/math-solver', mathSolverRoutes);
+app.use('/api/mindmap', mindMapRoutes);
+app.use('/api/conceptmap', conceptMapRoutes);
+app.use('/api/practice-tests', practiceTestRoutes);
+app.use('/api/worksheets', worksheetRoutes);
+app.use('/api/productivity', productivityRoutes);
+app.use('/api/group-timer', groupTimerRoutes);
+app.use('/api/audio', audioRoutes);
+app.use('/api/goals', goalsRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/gamification', gamificationRoutes);
+app.use('/api/organization', organizationRoutes);
+app.use('/api/social', socialRoutes);
 
-// 404 handler
-app.use((req, res, next) => {
-  console.log(`❌ 404 - Route not found: ${req.method} ${req.url}`);
-  res.status(404).json({ error: 'Route not found' });
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Quiz app backend is running' });
 });
 
-// Error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('💥 Error:', err.stack);
-  res.status(500).json({ error: 'Something went wrong!', message: err.message });
+  console.error(err.stack);
+  res.status(500).json({
+    error: 'Something went wrong!',
+    message: err.message
+  });
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n${'='.repeat(50)}`);
-  console.log(`🚀 inspir API running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🌐 Listening on all interfaces (0.0.0.0)`);
-  console.log(`✅ CORS enabled for all origins`);
-  console.log(`${'='.repeat(50)}\n`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
