@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
+import { studyUploadFileFilter } from '../utils/uploadFilter.js';
 import { generateWorksheet } from '../controllers/worksheetController.js';
 
 const router = express.Router();
@@ -10,18 +11,7 @@ const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024,
   },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain',
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF, DOCX, and TXT files are allowed.'));
-    }
-  },
+  fileFilter: studyUploadFileFilter,
 });
 
 router.post('/generate', requireUserOrServerSecret, upload.single('file'), generateWorksheet);

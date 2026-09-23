@@ -42,6 +42,18 @@ export function sanitizeUsername(username) {
 }
 
 /**
+ * Signup passwords. Existing accounts are not re-checked at login.
+ */
+export function assertStrongPassword(password) {
+  if (typeof password !== 'string' || password.length < 8 || password.length > 72) {
+    throw new Error('Password must be between 8 and 72 characters');
+  }
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+    throw new Error('Password must include a letter and a number');
+  }
+}
+
+/**
  * Sanitize quiz source name
  */
 export function sanitizeSourceName(sourceName) {
@@ -165,13 +177,12 @@ export function sanitizeFileName(fileName) {
     return 'file';
   }
 
-  // Remove path traversal attempts
-  let sanitized = fileName.replace(/\.\./g, '');
-
-  // Remove special characters except dots, hyphens, underscores
+  const base = fileName.split(/[/\\]/).pop() || 'file';
+  let sanitized = base.replace(/\.\./g, '');
   sanitized = sanitized.replace(/[^a-zA-Z0-9._-]/g, '_');
+  sanitized = sanitized.replace(/^\.+/, '');
 
-  // Limit length
+  if (!sanitized) return 'file';
   if (sanitized.length > 255) {
     sanitized = sanitized.substring(0, 255);
   }

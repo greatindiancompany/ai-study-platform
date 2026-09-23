@@ -1,7 +1,8 @@
 import express from 'express';
 import multer from 'multer';
-import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { authenticateUser } from '../middleware/auth.js';
 import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
+import { studyUploadFileFilter } from '../utils/uploadFilter.js';
 import {
   generateFlashcards,
   getUserDecks,
@@ -21,18 +22,7 @@ const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF, DOCX, and TXT files are allowed.'));
-    }
-  }
+  fileFilter: studyUploadFileFilter
 });
 
 // Generate flashcards. Auth or server secret runs before the upload is stored.
@@ -42,7 +32,7 @@ router.post('/generate', requireUserOrServerSecret, upload.single('file'), gener
 router.get('/decks', authenticateUser, getUserDecks);
 
 // Get specific deck by ID
-router.get('/deck/:id', optionalAuth, getDeckById);
+router.get('/deck/:id', authenticateUser, getDeckById);
 
 // Get study session (cards to study now)
 router.get('/deck/:id/study', authenticateUser, getStudySession);

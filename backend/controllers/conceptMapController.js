@@ -74,7 +74,14 @@ export async function getConceptMaps(req, res) {
 export async function getConceptMapById(req, res) {
   try {
     const { id } = req.params;
-    const { data } = await supabase.from('concept_maps').select('*').eq('id', id).single();
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    const { data } = await supabase
+      .from('concept_maps')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .maybeSingle();
     if (!data) return res.status(404).json({ error: 'Concept map not found' });
     res.json({ success: true, conceptMap: data });
   } catch (error) {

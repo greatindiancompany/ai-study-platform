@@ -23,8 +23,7 @@ export async function generateSummary(req, res) {
         content = await processFile(req.file);
       } catch (error) {
         return res.status(400).json({
-          error: 'Failed to process file',
-          details: error.message
+          error: 'Failed to process file'
         });
       }
     }
@@ -167,8 +166,7 @@ Important: Return ONLY the JSON object, no additional text.`;
   } catch (error) {
     console.error('Error generating summary:', error);
     res.status(500).json({
-      error: 'Failed to generate summary',
-      details: error.message
+      error: 'Failed to generate summary'
     });
   }
 }
@@ -204,8 +202,7 @@ export async function getSummaryHistory(req, res) {
   } catch (error) {
     console.error('Error fetching summary history:', error);
     res.status(500).json({
-      error: 'Failed to fetch summary history',
-      details: error.message
+      error: 'Failed to fetch summary history'
     });
   }
 }
@@ -214,20 +211,19 @@ export async function getSummaryById(req, res) {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const { data, error } = await supabase
       .from('text_summaries')
       .select('*')
       .eq('id', id)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (error || !data) {
       return res.status(404).json({ error: 'Summary not found' });
-    }
-
-    // Check if user owns this summary
-    if (data.user_id !== userId && data.user_id !== null) {
-      return res.status(403).json({ error: 'Access denied' });
     }
 
     // Parse summary_text if it's bullets format
@@ -243,8 +239,7 @@ export async function getSummaryById(req, res) {
   } catch (error) {
     console.error('Error fetching summary:', error);
     res.status(500).json({
-      error: 'Failed to fetch summary',
-      details: error.message
+      error: 'Failed to fetch summary'
     });
   }
 }
@@ -272,8 +267,7 @@ export async function deleteSummary(req, res) {
   } catch (error) {
     console.error('Error deleting summary:', error);
     res.status(500).json({
-      error: 'Failed to delete summary',
-      details: error.message
+      error: 'Failed to delete summary'
     });
   }
 }

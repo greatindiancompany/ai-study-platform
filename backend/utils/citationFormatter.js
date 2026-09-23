@@ -246,22 +246,42 @@ function formatNewspaper(style, data) {
   }
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeCitationValue(value) {
+  if (typeof value === 'string') return escapeHtml(value);
+  if (Array.isArray(value)) return value.map(escapeCitationValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, escapeCitationValue(entry)])
+    );
+  }
+  return value;
+}
+
 // Main function to generate citation
 function generateCitation(citationType, citationStyle, sourceData) {
+  const safeSourceData = escapeCitationValue(sourceData || {});
   switch (citationType) {
     case 'book':
-      return formatBook(citationStyle, sourceData);
+      return formatBook(citationStyle, safeSourceData);
     case 'article':
     case 'journal':
-      return formatArticle(citationStyle, sourceData);
+      return formatArticle(citationStyle, safeSourceData);
     case 'website':
-      return formatWebsite(citationStyle, sourceData);
+      return formatWebsite(citationStyle, safeSourceData);
     case 'newspaper':
-      return formatNewspaper(citationStyle, sourceData);
+      return formatNewspaper(citationStyle, safeSourceData);
     case 'video':
     case 'podcast':
-      // Can be extended for video/podcast citations
-      return formatWebsite(citationStyle, sourceData);
+      return formatWebsite(citationStyle, safeSourceData);
     default:
       throw new Error(`Unsupported citation type: ${citationType}`);
   }

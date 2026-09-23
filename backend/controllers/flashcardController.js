@@ -28,8 +28,7 @@ export async function generateFlashcards(req, res) {
         }
       } catch (error) {
         return res.status(400).json({
-          error: 'Failed to process file',
-          details: error.message
+          error: 'Failed to process file'
         });
       }
     }
@@ -153,8 +152,7 @@ Important: Return ONLY the JSON object, no additional text. Generate exactly ${c
   } catch (error) {
     console.error('Error generating flashcards:', error);
     res.status(500).json({
-      error: 'Failed to generate flashcards',
-      details: error.message
+      error: 'Failed to generate flashcards'
     });
   }
 }
@@ -205,8 +203,7 @@ export async function getUserDecks(req, res) {
   } catch (error) {
     console.error('Error fetching decks:', error);
     res.status(500).json({
-      error: 'Failed to fetch decks',
-      details: error.message
+      error: 'Failed to fetch decks'
     });
   }
 }
@@ -215,20 +212,19 @@ export async function getDeckById(req, res) {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const { data, error } = await supabase
       .from('flashcard_decks')
       .select('*')
       .eq('id', id)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (error || !data) {
       return res.status(404).json({ error: 'Deck not found' });
-    }
-
-    // Check access permissions
-    if (data.user_id !== userId && !data.is_shared) {
-      return res.status(403).json({ error: 'Access denied' });
     }
 
     // Get progress if user is authenticated
@@ -255,8 +251,7 @@ export async function getDeckById(req, res) {
   } catch (error) {
     console.error('Error fetching deck:', error);
     res.status(500).json({
-      error: 'Failed to fetch deck',
-      details: error.message
+      error: 'Failed to fetch deck'
     });
   }
 }
@@ -279,7 +274,7 @@ export async function getStudySession(req, res) {
     }
 
     // Check access
-    if (deck.user_id !== userId && !deck.is_shared) {
+    if (deck.user_id !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -349,8 +344,7 @@ export async function getStudySession(req, res) {
   } catch (error) {
     console.error('Error creating study session:', error);
     res.status(500).json({
-      error: 'Failed to create study session',
-      details: error.message
+      error: 'Failed to create study session'
     });
   }
 }
@@ -465,8 +459,7 @@ export async function recordStudyProgress(req, res) {
   } catch (error) {
     console.error('Error recording progress:', error);
     res.status(500).json({
-      error: 'Failed to record progress',
-      details: error.message
+      error: 'Failed to record progress'
     });
   }
 }
@@ -520,8 +513,7 @@ export async function shareDeck(req, res) {
   } catch (error) {
     console.error('Error sharing deck:', error);
     res.status(500).json({
-      error: 'Failed to share deck',
-      details: error.message
+      error: 'Failed to share deck'
     });
   }
 }
@@ -549,8 +541,7 @@ export async function deleteDeck(req, res) {
   } catch (error) {
     console.error('Error deleting deck:', error);
     res.status(500).json({
-      error: 'Failed to delete deck',
-      details: error.message
+      error: 'Failed to delete deck'
     });
   }
 }
@@ -578,8 +569,7 @@ export async function getSharedDeck(req, res) {
   } catch (error) {
     console.error('Error fetching shared deck:', error);
     res.status(500).json({
-      error: 'Failed to fetch deck',
-      details: error.message
+      error: 'Failed to fetch deck'
     });
   }
 }

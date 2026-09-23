@@ -11,7 +11,8 @@ export const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false
+  skipSuccessfulRequests: false,
+  validate: { xForwardedForHeader: false }
 });
 
 // Rate limiter for quiz generation
@@ -24,7 +25,8 @@ export const quizGenerationLimiter = rateLimit({
     message: 'You can generate up to 20 quizzes per hour. Please try again later.'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false }
 });
 
 // General API rate limiter
@@ -37,7 +39,8 @@ export const generalLimiter = rateLimit({
     message: 'Please slow down and try again later'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false }
 });
 
 // Rate limiter for quiz submission
@@ -50,5 +53,6 @@ export const quizSubmissionLimiter = rateLimit({
     message: 'Please wait a few minutes before submitting again'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false }
 });

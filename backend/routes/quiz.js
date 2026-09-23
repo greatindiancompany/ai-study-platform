@@ -13,9 +13,11 @@ import {
   submitSharedQuiz,
   getQuizAttempts
 } from '../controllers/quizController.js';
-import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { authenticateUser } from '../middleware/auth.js';
 import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import { quizGenerationLimiter, quizSubmissionLimiter } from '../middleware/rateLimiter.js';
+import { sanitizeFileName } from '../utils/sanitizer.js';
+import { studyUploadFileFilter } from '../utils/uploadFilter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,7 +31,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+    const safeName = sanitizeFileName(path.basename(file.originalname || 'file'));
+    cb(null, uniqueSuffix + '-' + safeName);
   }
 });
 
@@ -38,25 +41,7 @@ const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
-  fileFilter: (req, file, cb) => {
-    // Only allow TXT and DOCX files (PDF processing not yet implemented)
-    const allowedTypes = /txt|docx?$/i;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-
-    // Allowed MIME types
-    const allowedMimes = [
-      'text/plain',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
-    ];
-    const mimetype = allowedMimes.includes(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only TXT, DOC, and DOCX files are allowed'));
-    }
-  }
+  fileFilter: studyUploadFileFilter
 });
 
 // Create quiz. Auth or server secret is required before the upload is stored.
@@ -80,7 +65,7 @@ router.get('/shared/:shareToken', getSharedQuiz);
 // Submit shared quiz attempt (scores with the AI provider)
 router.post('/shared/:shareToken/submit', quizSubmissionLimiter, requireUserOrServerSecret, submitSharedQuiz);
 
-// Get specific quiz by ID
-router.get('/:id', optionalAuth, getQuizById);
+// Get specific quiz by ID (owner only; public access uses the share token)
+router.get('/:id', authenticateUser, getQuizById);
 
 export default router;

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { isPlaceholderSecret } from './envGuard.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,27 +15,44 @@ dotenv.config({ path: join(backendDir, '.env.local') });
 dotenv.config({ path: join(backendDir, '.env') });
 dotenv.config();
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let adminClient = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-
-export const supabaseAdmin = supabaseServiceRoleKey
-  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-  : null;
+function serviceRoleError() {
+  const error = new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+  error.code = 'SUPABASE_SERVICE_ROLE_KEY_MISSING';
+  return error;
+}
 
 export function getSupabaseAdminOrThrow() {
-  if (!supabaseAdmin) {
-    const error = new Error(
-      'Supabase admin client is not configured: SUPABASE_SERVICE_ROLE_KEY is missing (required to bypass RLS for server-side operations).'
-    );
-    error.code = 'SUPABASE_SERVICE_ROLE_KEY_MISSING';
-    throw error;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (
+    typeof supabaseUrl !== 'string' ||
+    typeof supabaseServiceRoleKey !== 'string' ||
+    supabaseServiceRoleKey.trim().length < 32 ||
+    isPlaceholderSecret(supabaseServiceRoleKey)
+  ) {
+    throw serviceRoleError();
   }
-  return supabaseAdmin;
+
+  if (!adminClient) {
+    adminClient = createClient(supabaseUrl, supabaseServiceRoleKey.trim(), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return adminClient;
 }
+
+// Server queries use the service-role client only. There is no anon-key fallback.
+export const supabase = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      const client = getSupabaseAdminOrThrow();
+      const value = client[prop];
+      return typeof value === 'function' ? value.bind(client) : value;
+    },
+  }
+);
+
+export const supabaseAdmin = supabase;
