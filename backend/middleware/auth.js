@@ -1,5 +1,6 @@
 import { supabase } from '../utils/supabaseClient.js';
 import jwt from 'jsonwebtoken';
+import { JWT_VERIFY_OPTIONS } from '../utils/jwtOptions.js';
 
 // JWT_SECRET is validated at startup in server.js
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -18,8 +19,8 @@ export async function resolveBearerUser(req) {
   const token = authHeader.substring(7);
 
   try {
-    // Verify JWT token
-    const decoded = jwt.verify(token, JWT_SECRET);
+    // Verify JWT token. Pin HS256 so alg=none and asymmetric tokens are rejected.
+    const decoded = jwt.verify(token, JWT_SECRET, JWT_VERIFY_OPTIONS);
 
     // Get user from database
     const { data: users, error } = await supabase
@@ -51,7 +52,7 @@ export async function resolveBearerUser(req) {
     return {
       ok: false,
       status: 401,
-      body: { error: 'Authentication failed', message: error.message }
+      body: { error: 'Authentication failed' }
     };
   }
 }
@@ -74,7 +75,7 @@ export async function optionalAuth(req, res, next) {
       const token = authHeader.substring(7);
 
       try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET, JWT_VERIFY_OPTIONS);
 
         const { data: users } = await supabase
           .from('users')

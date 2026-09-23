@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import { randomUUID } from 'crypto';
 import { logAuditEvent, AuditEventTypes, AuditActions, AuditStatus } from '../utils/auditLogger.js';
 import { sanitizeSourceName, sanitizeContent, sanitizeAttemptName, sanitizeAnswers } from '../utils/sanitizer.js';
+import { stripAnswerKeys } from '../utils/answerKeys.js';
 
 export async function createQuiz(req, res) {
   const requestId = randomUUID();
@@ -152,18 +153,37 @@ export async function createQuiz(req, res) {
         ? 'Quiz generation timed out'
         : isOverloaded
           ? 'AI is currently busy. Please try again in 30–60 seconds.'
-          : 'Failed to create quiz',
-      message: error.message
+          : 'Failed to create quiz'
     });
   }
 }
 
 export async function submitQuiz(req, res) {
   try {
-    const { quizId, questions, answers } = req.body;
+    const { quizId, answers } = req.body;
+    let { questions } = req.body;
     const userId = req.user?.id;
 
-    if (!questions || !answers || questions.length !== answers.length) {
+    if (quizId) {
+      const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .select('id, user_id, questions')
+        .eq('id', quizId)
+        .maybeSingle();
+
+      if (quizError) {
+        throw quizError;
+      }
+      if (!quiz || !Array.isArray(quiz.questions)) {
+        return res.status(404).json({ error: 'Quiz not found' });
+      }
+      if (userId && quiz.user_id && quiz.user_id !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      questions = quiz.questions;
+    }
+
+    if (!Array.isArray(questions) || !Array.isArray(answers) || questions.length !== answers.length) {
       return res.status(400).json({
         error: 'Invalid submission data'
       });
@@ -228,8 +248,7 @@ export async function submitQuiz(req, res) {
   } catch (error) {
     console.error('Error submitting quiz:', error);
     res.status(500).json({
-      error: 'Failed to submit quiz',
-      message: error.message
+      error: 'Failed to submit quiz'
     });
   }
 }
@@ -266,8 +285,7 @@ export async function getQuizHistory(req, res) {
   } catch (error) {
     console.error('Error getting quiz history:', error);
     res.status(500).json({
-      error: 'Failed to get quiz history',
-      message: error.message
+      error: 'Failed to get quiz history'
     });
   }
 }
@@ -276,12 +294,16 @@ export async function getQuizById(req, res) {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const { data: quiz, error } = await supabase
       .from('quizzes')
       .select('*')
       .eq('id', id)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (error) {
       console.error('Database error fetching quiz:', error.message);
@@ -294,19 +316,11 @@ export async function getQuizById(req, res) {
       });
     }
 
-    // Check if user owns this quiz
-    if (userId && quiz.user_id !== userId) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
-
     res.json(quiz);
   } catch (error) {
     console.error('Error getting quiz:', error.message);
     res.status(500).json({
-      error: 'Failed to get quiz',
-      message: error.message
+      error: 'Failed to get quiz'
     });
   }
 }
@@ -333,8 +347,7 @@ export async function shareQuiz(req, res) {
     if (fetchError) {
       console.error('Database error fetching quiz:', fetchError.message);
       return res.status(404).json({
-        error: 'Quiz not found',
-        details: fetchError.message
+        error: 'Quiz not found'
       });
     }
 
@@ -418,8 +431,7 @@ export async function shareQuiz(req, res) {
     });
 
     res.status(500).json({
-      error: 'Failed to share quiz',
-      message: error.message
+      error: 'Failed to share quiz'
     });
   }
 }
@@ -431,20 +443,13 @@ export async function getSharedQuiz(req, res) {
 
     const { data: quiz, error } = await supabase
       .from('quizzes')
-      .select('id, source_name, questions, created_by_username, created_at, is_shared, share_token')
+      .select('id, source_name, questions, created_by_username, created_at, is_shared')
       .eq('share_token', shareToken)
       .eq('is_shared', true)
-      .single();
+      .maybeSingle();
 
-    if (error) {
-      console.error('Database error fetching shared quiz:', error.message);
-      return res.status(404).json({
-        error: 'Shared quiz not found or no longer available',
-        details: error.message
-      });
-    }
-
-    if (!quiz) {
+    if (error || !quiz) {
+      console.error('Database error fetching shared quiz:', error?.message);
       return res.status(404).json({
         error: 'Shared quiz not found or no longer available'
       });
@@ -453,15 +458,14 @@ export async function getSharedQuiz(req, res) {
     res.json({
       quizId: quiz.id,
       sourceName: quiz.source_name,
-      questions: quiz.questions,
+      questions: stripAnswerKeys(quiz.questions),
       createdBy: quiz.created_by_username || 'Anonymous',
       createdAt: quiz.created_at
     });
   } catch (error) {
     console.error('Error getting shared quiz:', error.message);
     res.status(500).json({
-      error: 'Failed to get shared quiz',
-      message: error.message
+      error: 'Failed to get shared quiz'
     });
   }
 }
@@ -470,7 +474,7 @@ export async function getSharedQuiz(req, res) {
 export async function submitSharedQuiz(req, res) {
   try {
     const { shareToken } = req.params;
-    const { questions, answers, attemptName, isGuest } = req.body;
+    const { answers, attemptName, isGuest } = req.body;
     const userId = req.user?.id;
 
     // Sanitize and validate attempt name
@@ -483,7 +487,7 @@ export async function submitSharedQuiz(req, res) {
       });
     }
 
-    if (!questions || !answers || questions.length !== answers.length) {
+    if (!Array.isArray(answers)) {
       return res.status(400).json({
         error: 'Invalid submission data'
       });
@@ -502,18 +506,24 @@ export async function submitSharedQuiz(req, res) {
     // Get the quiz by share token
     const { data: quiz, error: quizError } = await supabase
       .from('quizzes')
-      .select('id, is_shared')
+      .select('id, is_shared, questions')
       .eq('share_token', shareToken)
-      .single();
+      .maybeSingle();
 
-    if (quizError || !quiz || !quiz.is_shared) {
+    if (quizError || !quiz || !quiz.is_shared || !Array.isArray(quiz.questions)) {
       return res.status(404).json({
         error: 'Shared quiz not found or no longer available'
       });
     }
 
-    // Score the quiz (use sanitized answers)
-    const scoringResult = await scoreQuiz(questions, sanitizedAnswers);
+    if (sanitizedAnswers.length !== quiz.questions.length) {
+      return res.status(400).json({
+        error: 'Invalid submission data'
+      });
+    }
+
+    // Score the stored quiz. Client-supplied question text and answer keys are ignored.
+    const scoringResult = await scoreQuiz(quiz.questions, sanitizedAnswers);
 
     // Save attempt to quiz_attempts table
     const { error: attemptError } = await supabase
@@ -540,8 +550,7 @@ export async function submitSharedQuiz(req, res) {
   } catch (error) {
     console.error('Error submitting shared quiz:', error);
     res.status(500).json({
-      error: 'Failed to submit quiz',
-      message: error.message
+      error: 'Failed to submit quiz'
     });
   }
 }
@@ -620,8 +629,7 @@ export async function getQuizAttempts(req, res) {
   } catch (error) {
     console.error('Error getting quiz attempts:', error);
     res.status(500).json({
-      error: 'Failed to get quiz attempts',
-      message: error.message
+      error: 'Failed to get quiz attempts'
     });
   }
 }

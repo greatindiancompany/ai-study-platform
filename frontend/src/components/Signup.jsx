@@ -16,8 +16,13 @@ export default function Signup({ onToggle }) {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 8 || password.length > 72) {
+      setError('Password must be between 8 and 72 characters');
+      return;
+    }
+
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      setError('Password must include a letter and a number');
       return;
     }
 
@@ -87,7 +92,7 @@ export default function Signup({ onToggle }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-deep-blue transition-colors"
-              placeholder="At least 6 characters"
+              placeholder="At least 8 characters, with a letter and a number"
             />
           </div>
 

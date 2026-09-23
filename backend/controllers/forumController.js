@@ -28,8 +28,7 @@ export async function getQuestions(req, res) {
     if (error) {
       console.error('Error fetching questions:', error);
       return res.status(500).json({
-        error: 'Failed to fetch questions',
-        message: error.message
+        error: 'Failed to fetch questions'
       });
     }
 
@@ -46,8 +45,7 @@ export async function getQuestions(req, res) {
   } catch (error) {
     console.error('Get questions error:', error);
     res.status(500).json({
-      error: 'Failed to fetch questions',
-      message: error.message
+      error: 'Failed to fetch questions'
     });
   }
 }
@@ -91,8 +89,7 @@ export async function getQuestion(req, res) {
   } catch (error) {
     console.error('Get question error:', error);
     res.status(500).json({
-      error: 'Failed to fetch question',
-      message: error.message
+      error: 'Failed to fetch question'
     });
   }
 }
@@ -134,8 +131,7 @@ export async function createQuestion(req, res) {
     if (error) {
       console.error('Error creating question:', error);
       return res.status(500).json({
-        error: 'Failed to create question',
-        message: error.message
+        error: 'Failed to create question'
       });
     }
 
@@ -143,8 +139,7 @@ export async function createQuestion(req, res) {
   } catch (error) {
     console.error('Create question error:', error);
     res.status(500).json({
-      error: 'Failed to create question',
-      message: error.message
+      error: 'Failed to create question'
     });
   }
 }
@@ -180,8 +175,7 @@ export async function createAnswer(req, res) {
     if (error) {
       console.error('Error creating answer:', error);
       return res.status(500).json({
-        error: 'Failed to create answer',
-        message: error.message
+        error: 'Failed to create answer'
       });
     }
 
@@ -189,8 +183,7 @@ export async function createAnswer(req, res) {
   } catch (error) {
     console.error('Create answer error:', error);
     res.status(500).json({
-      error: 'Failed to create answer',
-      message: error.message
+      error: 'Failed to create answer'
     });
   }
 }
@@ -229,8 +222,7 @@ export async function upvoteAnswer(req, res) {
     if (error) {
       console.error('Error upvoting answer:', error);
       return res.status(500).json({
-        error: 'Failed to upvote answer',
-        message: error.message
+        error: 'Failed to upvote answer'
       });
     }
 
@@ -238,8 +230,7 @@ export async function upvoteAnswer(req, res) {
   } catch (error) {
     console.error('Upvote error:', error);
     res.status(500).json({
-      error: 'Failed to upvote answer',
-      message: error.message
+      error: 'Failed to upvote answer'
     });
   }
 }
@@ -259,8 +250,7 @@ export async function removeUpvote(req, res) {
     if (error) {
       console.error('Error removing upvote:', error);
       return res.status(500).json({
-        error: 'Failed to remove upvote',
-        message: error.message
+        error: 'Failed to remove upvote'
       });
     }
 
@@ -268,8 +258,7 @@ export async function removeUpvote(req, res) {
   } catch (error) {
     console.error('Remove upvote error:', error);
     res.status(500).json({
-      error: 'Failed to remove upvote',
-      message: error.message
+      error: 'Failed to remove upvote'
     });
   }
 }
@@ -289,8 +278,7 @@ export async function getLeaderboard(req, res) {
     if (error) {
       console.error('Error fetching leaderboard:', error);
       return res.status(500).json({
-        error: 'Failed to fetch leaderboard',
-        message: error.message
+        error: 'Failed to fetch leaderboard'
       });
     }
 
@@ -298,8 +286,7 @@ export async function getLeaderboard(req, res) {
   } catch (error) {
     console.error('Get leaderboard error:', error);
     res.status(500).json({
-      error: 'Failed to fetch leaderboard',
-      message: error.message
+      error: 'Failed to fetch leaderboard'
     });
   }
 }
@@ -318,8 +305,7 @@ export async function getUserReputation(req, res) {
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
       console.error('Error fetching reputation:', error);
       return res.status(500).json({
-        error: 'Failed to fetch reputation',
-        message: error.message
+        error: 'Failed to fetch reputation'
       });
     }
 
@@ -327,8 +313,7 @@ export async function getUserReputation(req, res) {
   } catch (error) {
     console.error('Get user reputation error:', error);
     res.status(500).json({
-      error: 'Failed to fetch reputation',
-      message: error.message
+      error: 'Failed to fetch reputation'
     });
   }
 }
@@ -352,8 +337,7 @@ export async function getStats(req, res) {
   } catch (error) {
     console.error('Get stats error:', error);
     res.status(500).json({
-      error: 'Failed to fetch stats',
-      message: error.message
+      error: 'Failed to fetch stats'
     });
   }
 }

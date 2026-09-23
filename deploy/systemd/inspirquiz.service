@@ -7,7 +7,7 @@ Type=simple
 WorkingDirectory=/root/quiz-app/backend
 Environment=NODE_ENV=production
 Environment=PORT=3000
-Environment=HOST=0.0.0.0
+Environment=HOST=127.0.0.1
 EnvironmentFile=-/root/quiz-app/backend/.env
 ExecStart=/usr/bin/node /root/quiz-app/backend/server.js
 Restart=on-failure

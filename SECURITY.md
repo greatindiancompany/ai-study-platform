@@ -49,3 +49,7 @@ Security fixes target the repository default branch unless maintainers announce 
 - Avoid logging prompts, answers, files, tokens, and personally identifying data.
 - Use least-privilege keys where possible.
 - Review CORS changes carefully.
+
+## Runtime defaults
+
+The API process refuses to start when `JWT_SECRET` or `SUPABASE_SERVICE_ROLE_KEY` is missing, shorter than 32 characters, or still set to an example placeholder. Database calls use the service-role key. They do not fall back to the anon key. `TRUST_PROXY` defaults off, and `HOST` defaults to `127.0.0.1`. Apply `backend/database-lock-anon-users.sql` so the anon key shipped to browsers cannot read `users.password_hash`.

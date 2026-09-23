@@ -1,7 +1,8 @@
 import express from 'express';
 import multer from 'multer';
-import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { authenticateUser } from '../middleware/auth.js';
 import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
+import { studyUploadFileFilter } from '../utils/uploadFilter.js';
 import {
   generateStudyGuide,
   getStudyGuides,
@@ -21,18 +22,7 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB per file
     files: 5 // Max 5 files
   },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF, DOCX, and TXT files are allowed.'));
-    }
-  }
+  fileFilter: studyUploadFileFilter
 });
 
 // Generate study guide. Auth or server secret runs before uploads are stored.
@@ -42,7 +32,7 @@ router.post('/generate', requireUserOrServerSecret, upload.array('files', 5), ge
 router.get('/', authenticateUser, getStudyGuides);
 
 // Get specific study guide by ID
-router.get('/:id', optionalAuth, getStudyGuideById);
+router.get('/:id', authenticateUser, getStudyGuideById);
 
 // Update study guide (requires authentication)
 router.put('/:id', authenticateUser, updateStudyGuide);

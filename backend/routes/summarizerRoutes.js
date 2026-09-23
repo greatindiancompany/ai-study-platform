@@ -1,7 +1,8 @@
 import express from 'express';
 import multer from 'multer';
-import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { authenticateUser } from '../middleware/auth.js';
 import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
+import { studyUploadFileFilter } from '../utils/uploadFilter.js';
 import {
   generateSummary,
   getSummaryHistory,
@@ -17,18 +18,7 @@ const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF, DOCX, and TXT files are allowed.'));
-    }
-  }
+  fileFilter: studyUploadFileFilter
 });
 
 // Generate summary. Auth or server secret runs before the upload is stored.
@@ -38,7 +28,7 @@ router.post('/generate', requireUserOrServerSecret, upload.single('file'), gener
 router.get('/history', authenticateUser, getSummaryHistory);
 
 // Get specific summary by ID
-router.get('/:id', optionalAuth, getSummaryById);
+router.get('/:id', authenticateUser, getSummaryById);
 
 // Delete summary (requires authentication)
 router.delete('/:id', authenticateUser, deleteSummary);

@@ -39,6 +39,8 @@ import analyticsRoutes from './routes/analytics.js';
 import gamificationRoutes from './routes/gamification.js';
 import organizationRoutes from './routes/organization.js';
 import socialRoutes from './routes/social.js';
+import { assertRequiredSecrets, trustProxySetting } from './utils/envGuard.js';
+import { securityHeaders } from './middleware/securityHeaders.js';
 
 // Guard against stdout/stderr EPIPE when the log sink closes unexpectedly (keeps server alive)
 const handlePipeError = (err) => {
@@ -47,39 +49,28 @@ const handlePipeError = (err) => {
 process.stdout.on('error', handlePipeError);
 process.stderr.on('error', handlePipeError);
 
-// Validate critical environment variables
-const requiredEnvVars = ['ANTHROPIC_API_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingEnvVars.length > 0) {
-  console.error('ERROR: Missing required environment variables:');
-  missingEnvVars.forEach(varName => console.error(`  - ${varName}`));
-  console.error('\nPlease set these variables in your .env file');
+const secretCheck = assertRequiredSecrets(process.env);
+if (!secretCheck.ok) {
+  console.error(`ERROR: ${secretCheck.reason}`);
   process.exit(1);
 }
 
-// Validate JWT_SECRET is strong enough
-if (process.env.JWT_SECRET.length < 32) {
-  console.error('ERROR: JWT_SECRET must be at least 32 characters long for security');
-  console.error('Current length:', process.env.JWT_SECRET.length);
+let trustProxy;
+try {
+  trustProxy = trustProxySetting(process.env.TRUST_PROXY);
+} catch (error) {
+  console.error(`ERROR: ${error.message}`);
   process.exit(1);
-}
-
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn(
-    'WARN: SUPABASE_SERVICE_ROLE_KEY is not set. Some features using RLS-protected tables may fail with 503 until this is configured.'
-  );
 }
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = process.env.HOST || '127.0.0.1';
 
-// Trust the first proxy so req.ip is derived correctly when behind a reverse proxy (e.g. Nginx/Cloudflare),
-// and to prevent express-rate-limit from throwing ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
-if (process.env.TRUST_PROXY !== 'false') {
-  app.set('trust proxy', 1);
-}
+app.disable('x-powered-by');
+app.set('trust proxy', trustProxy);
+
+app.use(securityHeaders);
 
 // CORS configuration - only allow requests from frontend
 const allowedOrigins = [
@@ -100,7 +91,9 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      const corsError = new Error('Not allowed by CORS');
+      corsError.status = 403;
+      callback(corsError);
     }
   },
   credentials: true,
@@ -146,10 +139,17 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    error: 'Something went wrong!',
-    message: err.message
-  });
+  if (res.headersSent) {
+    return next(err);
+  }
+  const status = Number(err.status || err.statusCode) || 500;
+  if (status >= 500) {
+    return res.status(500).json({ error: 'Something went wrong!' });
+  }
+  const clientMessage = typeof err.message === 'string' && err.message.length > 0 && err.message.length < 200
+    ? err.message
+    : 'Request failed';
+  return res.status(status).json({ error: clientMessage });
 });
 
 app.listen(PORT, HOST, () => {

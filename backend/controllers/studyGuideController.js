@@ -173,8 +173,7 @@ Important: Return ONLY the JSON object, no additional text.`;
   } catch (error) {
     console.error('Error generating study guide:', error);
     res.status(500).json({
-      error: 'Failed to generate study guide',
-      details: error.message
+      error: 'Failed to generate study guide'
     });
   }
 }
@@ -202,8 +201,7 @@ export async function getStudyGuides(req, res) {
   } catch (error) {
     console.error('Error fetching study guides:', error);
     res.status(500).json({
-      error: 'Failed to fetch study guides',
-      details: error.message
+      error: 'Failed to fetch study guides'
     });
   }
 }
@@ -212,20 +210,19 @@ export async function getStudyGuideById(req, res) {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const { data, error } = await supabase
       .from('study_guides')
       .select('*')
       .eq('id', id)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (error || !data) {
       return res.status(404).json({ error: 'Study guide not found' });
-    }
-
-    // Check access permissions
-    if (data.user_id !== userId && !data.is_shared) {
-      return res.status(403).json({ error: 'Access denied' });
     }
 
     res.json({
@@ -236,8 +233,7 @@ export async function getStudyGuideById(req, res) {
   } catch (error) {
     console.error('Error fetching study guide:', error);
     res.status(500).json({
-      error: 'Failed to fetch study guide',
-      details: error.message
+      error: 'Failed to fetch study guide'
     });
   }
 }
@@ -295,8 +291,7 @@ export async function updateStudyGuide(req, res) {
   } catch (error) {
     console.error('Error updating study guide:', error);
     res.status(500).json({
-      error: 'Failed to update study guide',
-      details: error.message
+      error: 'Failed to update study guide'
     });
   }
 }
@@ -356,8 +351,7 @@ export async function shareStudyGuide(req, res) {
   } catch (error) {
     console.error('Error sharing study guide:', error);
     res.status(500).json({
-      error: 'Failed to share study guide',
-      details: error.message
+      error: 'Failed to share study guide'
     });
   }
 }
@@ -385,8 +379,7 @@ export async function deleteStudyGuide(req, res) {
   } catch (error) {
     console.error('Error deleting study guide:', error);
     res.status(500).json({
-      error: 'Failed to delete study guide',
-      details: error.message
+      error: 'Failed to delete study guide'
     });
   }
 }
@@ -414,8 +407,7 @@ export async function getSharedStudyGuide(req, res) {
   } catch (error) {
     console.error('Error fetching shared study guide:', error);
     res.status(500).json({
-      error: 'Failed to fetch study guide',
-      details: error.message
+      error: 'Failed to fetch study guide'
     });
   }
 }

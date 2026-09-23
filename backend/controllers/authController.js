@@ -2,7 +2,8 @@ import { supabase } from '../utils/supabaseClient.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { logAuditEvent, AuditEventTypes, AuditActions, AuditStatus } from '../utils/auditLogger.js';
-import { sanitizeUsername } from '../utils/sanitizer.js';
+import { assertStrongPassword, sanitizeUsername } from '../utils/sanitizer.js';
+import { JWT_SIGN_OPTIONS } from '../utils/jwtOptions.js';
 
 // JWT_SECRET is validated at startup in server.js
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -34,9 +35,11 @@ export async function signup(req, res) {
       });
     }
 
-    if (password.length < 6) {
+    try {
+      assertStrongPassword(password);
+    } catch (error) {
       return res.status(400).json({
-        error: 'Password must be at least 6 characters'
+        error: error.message
       });
     }
 
@@ -62,7 +65,7 @@ export async function signup(req, res) {
       .insert([
         { username: sanitizedUsername, password_hash: passwordHash }
       ])
-      .select()
+      .select('id, username')
       .single();
 
     if (error) {
@@ -76,7 +79,7 @@ export async function signup(req, res) {
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      JWT_SIGN_OPTIONS
     );
 
     // Log successful signup
@@ -112,8 +115,7 @@ export async function signup(req, res) {
     });
 
     res.status(500).json({
-      error: 'Failed to create account',
-      message: error.message
+      error: 'Failed to create account'
     });
   }
 }
@@ -131,7 +133,7 @@ export async function login(req, res) {
     // Get user from database
     const { data: users, error } = await supabase
       .from('users')
-      .select('*')
+      .select('id, username, password_hash')
       .eq('username', username)
       .limit(1);
 
@@ -176,7 +178,7 @@ export async function login(req, res) {
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      JWT_SIGN_OPTIONS
     );
 
     // Log successful login
@@ -212,8 +214,7 @@ export async function login(req, res) {
     });
 
     res.status(500).json({
-      error: 'Failed to login',
-      message: error.message
+      error: 'Failed to login'
     });
   }
 }
@@ -225,8 +226,7 @@ export async function logout(req, res) {
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({
-      error: 'Failed to logout',
-      message: error.message
+      error: 'Failed to logout'
     });
   }
 }
@@ -245,8 +245,7 @@ export async function getCurrentUser(req, res) {
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({
-      error: 'Failed to get user',
-      message: error.message
+      error: 'Failed to get user'
     });
   }
 }

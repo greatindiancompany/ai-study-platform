@@ -74,7 +74,7 @@ Return as JSON:
     });
   } catch (error) {
     console.error('Error solving math problem:', error);
-    res.status(500).json({ error: 'Failed to solve problem', details: error.message });
+    res.status(500).json({ error: 'Failed to solve problem' });
   }
 }
 

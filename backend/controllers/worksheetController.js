@@ -178,7 +178,7 @@ export async function generateWorksheet(req, res) {
       try {
         content = await processFile(req.file);
       } catch (error) {
-        return res.status(400).json({ error: 'Failed to process file', details: error.message });
+        return res.status(400).json({ error: 'Failed to process file' });
       }
     }
 
@@ -243,7 +243,6 @@ Rules:
     console.error('Error generating worksheet:', error);
     return res.status(500).json({
       error: 'Failed to generate worksheet',
-      details: error.message,
     });
   }
 }
