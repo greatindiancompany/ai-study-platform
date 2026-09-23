@@ -161,6 +161,19 @@ export async function listResources(req, res) {
   try {
     const groupId = req.query.group_id ? String(req.query.group_id) : null;
     const limit = Math.min(200, Math.max(1, safeInt(req.query.limit, 50)));
+    const userId = req.user.id;
+
+    if (groupId) {
+      const membership = await supabase
+        .from('study_group_memberships')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (membership.error || !membership.data) {
+        return res.status(403).json({ error: 'Not a member of this group' });
+      }
+    }
 
     let query = supabase
       .from('shared_resources')

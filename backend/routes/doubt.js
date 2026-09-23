@@ -22,7 +22,7 @@ router.get('/shared/:shareToken', getSharedDoubt);
 
 // Protected routes (auth required)
 router.get('/history', authenticateUser, getDoubtHistory);
-router.get('/:id', optionalAuth, getDoubt);
+router.get('/:id', authenticateUser, getDoubt);
 router.put('/:id', authenticateUser, updateDoubt);
 router.delete('/:id', authenticateUser, deleteDoubt);
 router.post('/:doubtId/share', authenticateUser, createShare);

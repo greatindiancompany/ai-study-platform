@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import Navigation from '../components/Navigation';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import API_URL from '../utils/api';
 
 export default function CornellNotes() {
   const { user } = useAuth();
@@ -26,7 +25,7 @@ export default function CornellNotes() {
 
   const loadHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await axios.get(`${API_URL}/cornell-notes/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -46,7 +45,7 @@ export default function CornellNotes() {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const response = await axios.post(
@@ -72,7 +71,7 @@ export default function CornellNotes() {
 
   const deleteNote = async (id) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       await axios.delete(`${API_URL}/cornell-notes/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

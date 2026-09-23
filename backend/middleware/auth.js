@@ -17,7 +17,7 @@ export async function authenticateUser(req, res, next) {
     const token = authHeader.substring(7);
 
     // Verify JWT token
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
 
     // Get user from database
     const { data: users, error } = await supabase
@@ -50,8 +50,7 @@ export async function authenticateUser(req, res, next) {
     }
 
     res.status(401).json({
-      error: 'Authentication failed',
-      message: error.message
+      error: 'Authentication failed'
     });
   }
 }
@@ -64,7 +63,7 @@ export async function optionalAuth(req, res, next) {
       const token = authHeader.substring(7);
 
       try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
 
         const { data: users } = await supabase
           .from('users')

@@ -15,6 +15,7 @@ import {
 } from '../controllers/quizController.js';
 import { authenticateUser, optionalAuth } from '../middleware/auth.js';
 import { quizGenerationLimiter, quizSubmissionLimiter } from '../middleware/rateLimiter.js';
+import { sanitizeFileName } from '../utils/sanitizer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,7 +29,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+    const safeName = sanitizeFileName(path.basename(file.originalname || 'file'));
+    cb(null, uniqueSuffix + '-' + safeName);
   }
 });
 
@@ -79,7 +81,7 @@ router.get('/shared/:shareToken', getSharedQuiz);
 // Submit shared quiz attempt (public with optional authentication and rate limiting)
 router.post('/shared/:shareToken/submit', quizSubmissionLimiter, optionalAuth, submitSharedQuiz);
 
-// Get specific quiz by ID
-router.get('/:id', optionalAuth, getQuizById);
+// Get specific quiz by ID (owner only; public access uses the share token)
+router.get('/:id', authenticateUser, getQuizById);
 
 export default router;

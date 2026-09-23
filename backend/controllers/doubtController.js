@@ -131,17 +131,16 @@ export async function getDoubt(req, res) {
     const { id } = req.params;
     const userId = req.user?.id;
 
-    let query = supabase
-      .from('doubt_questions')
-      .select('*')
-      .eq('id', id);
-
-    // If user is authenticated, only show their own doubts
-    if (userId) {
-      query = query.eq('user_id', userId);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { data, error } = await query.single();
+    const { data, error } = await supabase
+      .from('doubt_questions')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (error) {
       throw error;
