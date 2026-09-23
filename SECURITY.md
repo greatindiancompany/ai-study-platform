@@ -32,6 +32,12 @@ Use GitHub private vulnerability reporting if it is enabled for this repository,
 - Treat every `VITE_` variable as public because it is shipped to the browser.
 - Rotate any credential that may have been exposed.
 
+## Historical Supabase service-role key
+
+The current tree does not contain a Supabase service-role key. Older commits still do, for Supabase project ref `ksdnbkxixbywurohugkx`. Those commits include `4a07dbb`, `0820810`, `e257709`, `6e8212c`, and `cf9cb83`. The key was removed from the tree by later commits and must still be rotated in the Supabase dashboard (Project Settings → API). Rotate any database password that was stored beside it.
+
+Do not copy that key into a new commit, issue, pull request, or log. This repository has not rewritten git history, so the old value remains reachable from those commits until it is rotated and treated as compromised.
+
 ## Supported Branch
 
 Security fixes target the repository default branch unless maintainers announce a release policy.

@@ -156,22 +156,28 @@ export default function XpLeveling() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
-                {[
-                  { delta: 5, label: '+5 XP', reason: 'Quick win' },
-                  { delta: 15, label: '+15 XP', reason: 'Focused session' },
-                  { delta: 30, label: '+30 XP', reason: 'Deep work block' },
-                ].map((b) => (
-                  <button
-                    key={b.label}
-                    onClick={() => award(b.delta, b.reason)}
-                    disabled={loading}
-                    className="px-4 py-3 rounded-xl bg-gray-900 text-white font-extrabold hover:bg-gray-800 transition-all disabled:opacity-50"
-                  >
-                    {b.label}
-                  </button>
-                ))}
-              </div>
+              {isAuthed ? (
+                <p className="mt-6 text-sm text-gray-600">
+                  XP on your account is recorded by the server. This page cannot add XP.
+                </p>
+              ) : (
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {[
+                    { delta: 5, label: '+5 XP', reason: 'Quick win' },
+                    { delta: 15, label: '+15 XP', reason: 'Focused session' },
+                    { delta: 30, label: '+30 XP', reason: 'Deep work block' },
+                  ].map((b) => (
+                    <button
+                      key={b.label}
+                      onClick={() => award(b.delta, b.reason)}
+                      disabled={loading}
+                      className="px-4 py-3 rounded-xl bg-gray-900 text-white font-extrabold hover:bg-gray-800 transition-all disabled:opacity-50"
+                    >
+                      {b.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {error && <div className="mt-4 text-sm text-red-600">{error}</div>}
               {loading && <div className="mt-4 text-sm text-gray-500">Loading…</div>}
@@ -180,7 +186,7 @@ export default function XpLeveling() {
             <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent XP</h2>
               {events.length === 0 ? (
-                <div className="text-sm text-gray-600">No XP events yet. Award some above to get started.</div>
+                <div className="text-sm text-gray-600">No XP events yet.</div>
               ) : (
                 <div className="space-y-3">
                   {events.slice(0, 20).map((e) => (

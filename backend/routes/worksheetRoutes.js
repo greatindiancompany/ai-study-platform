@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import { generateWorksheet } from '../controllers/worksheetController.js';
 
 const router = express.Router();
@@ -24,7 +24,7 @@ const upload = multer({
   },
 });
 
-router.post('/generate', optionalAuth, upload.single('file'), generateWorksheet);
+router.post('/generate', requireUserOrServerSecret, upload.single('file'), generateWorksheet);
 
 export default router;
 

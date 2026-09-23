@@ -1,10 +1,11 @@
 import express from 'express';
-import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { authenticateUser } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import { solveMathProblem, getSolutionHistory, generatePracticeProblems } from '../controllers/mathSolverController.js';
 
 const router = express.Router();
 
-router.post('/solve', optionalAuth, solveMathProblem);
+router.post('/solve', requireUserOrServerSecret, solveMathProblem);
 router.get('/history', authenticateUser, getSolutionHistory);
 router.post('/solution/:id/practice', authenticateUser, generatePracticeProblems);
 

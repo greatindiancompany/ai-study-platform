@@ -87,7 +87,7 @@ export default function ResourceSharing() {
   };
 
   const groupLabel = useMemo(() => {
-    if (!groupId) return 'All (personal + global)';
+    if (!groupId) return 'Your resources and your groups';
     const g = groups.find((x) => x.id === groupId);
     return g ? g.name : 'Selected group';
   }, [groupId, groups]);
@@ -135,7 +135,7 @@ export default function ResourceSharing() {
                 onChange={(e) => setGroupId(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none bg-white"
               >
-                <option value="">All</option>
+                <option value="">Mine and my groups</option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}

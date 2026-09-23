@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import {
   uploadAndExtractImage,
   solveDoubt,
@@ -14,9 +15,9 @@ import {
 
 const router = express.Router();
 
-// Public routes (no auth required)
-router.post('/upload-image', uploadAndExtractImage);
-router.post('/solve', optionalAuth, solveDoubt);
+// AI routes require a user or the server secret before any provider call.
+router.post('/upload-image', requireUserOrServerSecret, uploadAndExtractImage);
+router.post('/solve', requireUserOrServerSecret, solveDoubt);
 router.get('/recent', getRecentSolutions);
 router.get('/shared/:shareToken', getSharedDoubt);
 

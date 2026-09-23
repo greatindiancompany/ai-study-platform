@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import {
   generateSummary,
   getSummaryHistory,
@@ -30,8 +31,8 @@ const upload = multer({
   }
 });
 
-// Generate summary (with optional authentication for saving)
-router.post('/generate', optionalAuth, upload.single('file'), generateSummary);
+// Generate summary. Auth or server secret runs before the upload is stored.
+router.post('/generate', requireUserOrServerSecret, upload.single('file'), generateSummary);
 
 // Get summary history (requires authentication)
 router.get('/history', authenticateUser, getSummaryHistory);

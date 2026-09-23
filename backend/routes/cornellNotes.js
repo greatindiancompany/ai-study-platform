@@ -6,12 +6,13 @@ import {
   updateNote,
   deleteNote
 } from '../controllers/cornellNotesController.js';
-import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { authenticateUser } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 
 const router = express.Router();
 
-// Public route - generate Cornell notes (works for guests and authenticated users)
-router.post('/generate', optionalAuth, generateNotes);
+// Generate Cornell notes (user or server secret; guests cannot spend provider quota)
+router.post('/generate', requireUserOrServerSecret, generateNotes);
 
 // Authenticated routes - notes management
 router.get('/history', authenticateUser, getNotesHistory);
