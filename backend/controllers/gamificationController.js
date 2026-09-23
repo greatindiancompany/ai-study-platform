@@ -1,5 +1,6 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { sanitizeUsername } from '../utils/sanitizer.js';
+import { denyWithoutServerSecret } from '../middleware/serverSecret.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -93,6 +94,8 @@ export async function listXpEvents(req, res) {
 }
 
 export async function awardXp(req, res) {
+  if (denyWithoutServerSecret(req, res, 'XP cannot be self-awarded')) return;
+
   try {
     const userId = req.user.id;
     const delta = safeInt(req.body?.delta, 0);
@@ -173,6 +176,8 @@ export async function listBadges(req, res) {
 }
 
 export async function awardBadge(req, res) {
+  if (denyWithoutServerSecret(req, res, 'Badges cannot be self-awarded')) return;
+
   try {
     const userId = req.user.id;
     const badgeId = req.body?.badge_id ? String(req.body.badge_id) : null;

@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import {
   generateStudyGuide,
   getStudyGuides,
@@ -34,8 +35,8 @@ const upload = multer({
   }
 });
 
-// Generate study guide (with optional authentication for saving)
-router.post('/generate', optionalAuth, upload.array('files', 5), generateStudyGuide);
+// Generate study guide. Auth or server secret runs before uploads are stored.
+router.post('/generate', requireUserOrServerSecret, upload.array('files', 5), generateStudyGuide);
 
 // Get all study guides for user (requires authentication)
 router.get('/', authenticateUser, getStudyGuides);

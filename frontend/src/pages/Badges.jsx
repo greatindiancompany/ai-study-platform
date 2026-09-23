@@ -147,13 +147,19 @@ export default function Badges() {
               <div className="mt-3 font-extrabold text-gray-900 text-xl">{b.name}</div>
               <div className="text-sm text-gray-600 mt-1">{b.description}</div>
               <div className="mt-4">
-                <button
-                  onClick={() => markEarned(b)}
-                  disabled={b.is_earned}
-                  className="w-full px-4 py-3 rounded-xl font-extrabold transition-all disabled:opacity-50 bg-gray-900 text-white hover:bg-gray-800"
-                >
-                  {b.is_earned ? 'Collected' : 'Mark earned'}
-                </button>
+                {isAuthed ? (
+                  <div className="text-sm text-gray-600">
+                    {b.is_earned ? 'Recorded on your account.' : 'Locked until the server records it.'}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => markEarned(b)}
+                    disabled={b.is_earned}
+                    className="w-full px-4 py-3 rounded-xl font-extrabold transition-all disabled:opacity-50 bg-gray-900 text-white hover:bg-gray-800"
+                  >
+                    {b.is_earned ? 'Collected' : 'Mark earned'}
+                  </button>
+                )}
               </div>
               {b.earned_at && (
                 <div className="text-xs text-gray-500 mt-3">

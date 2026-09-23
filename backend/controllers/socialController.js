@@ -17,6 +17,37 @@ function normalizeTags(tags) {
     .slice(0, 20);
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value) {
+  return typeof value === 'string' && UUID_RE.test(value);
+}
+
+export function buildResourceListScope({ userId, groupId, memberGroupIds }) {
+  if (!isUuid(userId)) {
+    return { errorStatus: 401, error: 'Invalid user' };
+  }
+
+  const groups = (memberGroupIds || []).filter((id) => isUuid(id));
+
+  if (groupId) {
+    if (!isUuid(groupId)) {
+      return { errorStatus: 400, error: 'group_id must be a UUID' };
+    }
+    const member = groups.some((id) => id.toLowerCase() === groupId.toLowerCase());
+    if (!member) {
+      return { errorStatus: 403, error: 'Not a member of this group' };
+    }
+    return { mode: 'group', groupId };
+  }
+
+  if (groups.length === 0) {
+    return { mode: 'own' };
+  }
+
+  return { mode: 'own-or-groups', groupIds: groups };
+}
+
 function randomJoinCode() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -157,10 +188,26 @@ export async function getStudyGroup(req, res) {
 // Resource sharing
 // =========================
 
+async function listMemberGroupIds(userId) {
+  const { data, error } = await supabase
+    .from('study_group_memberships')
+    .select('group_id')
+    .eq('user_id', userId);
+  if (error) throw error;
+  return (data || []).map((row) => row.group_id).filter((id) => isUuid(id));
+}
+
 export async function listResources(req, res) {
   try {
+    const userId = req.user.id;
     const groupId = req.query.group_id ? String(req.query.group_id) : null;
     const limit = Math.min(200, Math.max(1, safeInt(req.query.limit, 50)));
+    const memberGroupIds = await listMemberGroupIds(userId);
+    const scope = buildResourceListScope({ userId, groupId, memberGroupIds });
+
+    if (scope.error) {
+      return res.status(scope.errorStatus).json({ error: scope.error });
+    }
 
     let query = supabase
       .from('shared_resources')
@@ -168,7 +215,13 @@ export async function listResources(req, res) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (groupId) query = query.eq('group_id', groupId);
+    if (scope.mode === 'group') {
+      query = query.eq('group_id', scope.groupId);
+    } else if (scope.mode === 'own') {
+      query = query.eq('user_id', userId);
+    } else {
+      query = query.or(`user_id.eq.${userId},group_id.in.(${scope.groupIds.join(',')})`);
+    }
 
     const { data, error } = await query;
     if (error) throw error;

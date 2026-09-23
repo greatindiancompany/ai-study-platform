@@ -14,6 +14,7 @@ import {
   getQuizAttempts
 } from '../controllers/quizController.js';
 import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import { quizGenerationLimiter, quizSubmissionLimiter } from '../middleware/rateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,11 +59,11 @@ const upload = multer({
   }
 });
 
-// Create quiz (with optional authentication and rate limiting)
-router.post('/generate', quizGenerationLimiter, optionalAuth, upload.single('file'), createQuiz);
+// Create quiz. Auth or server secret is required before the upload is stored.
+router.post('/generate', quizGenerationLimiter, requireUserOrServerSecret, upload.single('file'), createQuiz);
 
-// Submit quiz answers (with rate limiting)
-router.post('/submit', quizSubmissionLimiter, optionalAuth, submitQuiz);
+// Submit quiz answers (scores with the AI provider)
+router.post('/submit', quizSubmissionLimiter, requireUserOrServerSecret, submitQuiz);
 
 // Get quiz history (requires authentication)
 router.get('/history', authenticateUser, getQuizHistory);
@@ -76,8 +77,8 @@ router.get('/:quizId/attempts', authenticateUser, getQuizAttempts);
 // Get shared quiz by token (public)
 router.get('/shared/:shareToken', getSharedQuiz);
 
-// Submit shared quiz attempt (public with optional authentication and rate limiting)
-router.post('/shared/:shareToken/submit', quizSubmissionLimiter, optionalAuth, submitSharedQuiz);
+// Submit shared quiz attempt (scores with the AI provider)
+router.post('/shared/:shareToken/submit', quizSubmissionLimiter, requireUserOrServerSecret, submitSharedQuiz);
 
 // Get specific quiz by ID
 router.get('/:id', optionalAuth, getQuizById);

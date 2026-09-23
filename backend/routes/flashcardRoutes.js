@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authenticateUser, optionalAuth } from '../middleware/auth.js';
+import { requireUserOrServerSecret } from '../middleware/requireUserOrServerSecret.js';
 import {
   generateFlashcards,
   getUserDecks,
@@ -34,8 +35,8 @@ const upload = multer({
   }
 });
 
-// Generate flashcards (with optional authentication for saving)
-router.post('/generate', optionalAuth, upload.single('file'), generateFlashcards);
+// Generate flashcards. Auth or server secret runs before the upload is stored.
+router.post('/generate', requireUserOrServerSecret, upload.single('file'), generateFlashcards);
 
 // Get all decks for user (requires authentication)
 router.get('/decks', authenticateUser, getUserDecks);

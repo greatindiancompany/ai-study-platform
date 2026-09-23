@@ -4,18 +4,20 @@ import jwt from 'jsonwebtoken';
 // JWT_SECRET is validated at startup in server.js
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export async function authenticateUser(req, res, next) {
+export async function resolveBearerUser(req) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return {
+      ok: false,
+      status: 401,
+      body: { error: 'No authorization token provided' }
+    };
+  }
+
+  const token = authHeader.substring(7);
+
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'No authorization token provided'
-      });
-    }
-
-    const token = authHeader.substring(7);
-
     // Verify JWT token
     const decoded = jwt.verify(token, JWT_SECRET);
 
@@ -27,33 +29,41 @@ export async function authenticateUser(req, res, next) {
       .limit(1);
 
     if (error || !users || users.length === 0) {
-      return res.status(401).json({
-        error: 'Invalid or expired token'
-      });
+      return {
+        ok: false,
+        status: 401,
+        body: { error: 'Invalid or expired token' }
+      };
     }
 
-    req.user = users[0];
-    next();
+    return { ok: true, user: users[0] };
   } catch (error) {
     console.error('Authentication error:', error);
 
     if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        error: 'Invalid token'
-      });
+      return { ok: false, status: 401, body: { error: 'Invalid token' } };
     }
 
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        error: 'Token expired'
-      });
+      return { ok: false, status: 401, body: { error: 'Token expired' } };
     }
 
-    res.status(401).json({
-      error: 'Authentication failed',
-      message: error.message
-    });
+    return {
+      ok: false,
+      status: 401,
+      body: { error: 'Authentication failed', message: error.message }
+    };
   }
+}
+
+export async function authenticateUser(req, res, next) {
+  const result = await resolveBearerUser(req);
+  if (!result.ok) {
+    return res.status(result.status).json(result.body);
+  }
+
+  req.user = result.user;
+  next();
 }
 
 export async function optionalAuth(req, res, next) {
