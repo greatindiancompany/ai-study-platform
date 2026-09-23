@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/generate', optionalAuth, generateConceptMap);
 router.get('/', authenticateUser, getConceptMaps);
-router.get('/:id', optionalAuth, getConceptMapById);
+router.get('/:id', authenticateUser, getConceptMapById);
 router.put('/:id', authenticateUser, updateConceptMap);
 router.delete('/:id', authenticateUser, deleteConceptMap);
 

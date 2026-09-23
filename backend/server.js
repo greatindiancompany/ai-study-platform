@@ -146,10 +146,14 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    error: 'Something went wrong!',
-    message: err.message
-  });
+  if (res.headersSent) {
+    return next(err);
+  }
+  const status = Number(err.status || err.statusCode) || 500;
+  if (status >= 500) {
+    return res.status(500).json({ error: 'Something went wrong!' });
+  }
+  return res.status(status).json({ error: err.message || 'Request failed' });
 });
 
 app.listen(PORT, HOST, () => {

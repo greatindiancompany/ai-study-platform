@@ -97,11 +97,12 @@ export async function createPracticeTest(req, res) {
 
 export async function submitTestAttempt(req, res) {
   try {
-    const { testId, answers, timeTakenSeconds } = req.body;
+    const testId = req.params.id || req.body?.testId;
+    const { answers, timeTakenSeconds } = req.body;
     const userId = req.user.id;
 
     const { data: test } = await supabase.from('practice_tests')
-      .select('*').eq('id', testId).single();
+      .select('*').eq('id', testId).eq('user_id', userId).maybeSingle();
     if (!test) return res.status(404).json({ error: 'Test not found' });
 
     let score = 0;
@@ -181,7 +182,14 @@ export async function getPracticeTests(req, res) {
 export async function getPracticeTestById(req, res) {
   try {
     const { id } = req.params;
-    const { data } = await supabase.from('practice_tests').select('*').eq('id', id).single();
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    const { data } = await supabase
+      .from('practice_tests')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .maybeSingle();
     if (!data) return res.status(404).json({ error: 'Test not found' });
     res.json({ success: true, test: data });
   } catch (error) {

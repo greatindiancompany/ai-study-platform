@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/generate', optionalAuth, generateMindMap);
 router.get('/', authenticateUser, getMindMaps);
-router.get('/:id', optionalAuth, getMindMapById);
+router.get('/:id', authenticateUser, getMindMapById);
 router.put('/:id', authenticateUser, updateMindMap);
 router.delete('/:id', authenticateUser, deleteMindMap);
 

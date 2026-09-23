@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import Navigation from '../components/Navigation';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import API_URL from '../utils/api';
 
 export default function CitationGenerator() {
   const { user } = useAuth();
@@ -96,7 +95,7 @@ export default function CitationGenerator() {
 
   const loadHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await axios.get(`${API_URL}/citations/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -135,7 +134,7 @@ export default function CitationGenerator() {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const response = await axios.post(
@@ -169,7 +168,7 @@ export default function CitationGenerator() {
 
   const deleteCitation = async (id) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       await axios.delete(`${API_URL}/citations/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

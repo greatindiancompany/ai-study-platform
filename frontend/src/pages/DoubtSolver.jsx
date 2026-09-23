@@ -3,8 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navigation from '../components/Navigation';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import API_URL from '../utils/api';
 
 export default function DoubtSolver() {
   const { user } = useAuth();
@@ -78,7 +77,7 @@ export default function DoubtSolver() {
 
   const loadHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await axios.get(`${API_URL}/doubt/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -166,7 +165,7 @@ export default function DoubtSolver() {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const response = await axios.post(
@@ -209,7 +208,7 @@ export default function DoubtSolver() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await axios.post(
         `${API_URL}/doubt/${solution.doubtId}/share`,
         {},
@@ -237,7 +236,7 @@ export default function DoubtSolver() {
 
   const deleteDoubt = async (id) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       await axios.delete(`${API_URL}/doubt/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

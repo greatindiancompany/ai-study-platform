@@ -18,6 +18,6 @@ router.post('/generate', optionalAuth, upload.single('file'), generateQuestions)
 router.post('/tests', authenticateUser, createPracticeTest);
 router.post('/tests/:id/submit', authenticateUser, submitTestAttempt);
 router.get('/tests', authenticateUser, getPracticeTests);
-router.get('/tests/:id', optionalAuth, getPracticeTestById);
+router.get('/tests/:id', authenticateUser, getPracticeTestById);
 
 export default router;

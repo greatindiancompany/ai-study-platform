@@ -62,7 +62,7 @@ export async function signup(req, res) {
       .insert([
         { username: sanitizedUsername, password_hash: passwordHash }
       ])
-      .select()
+      .select('id, username')
       .single();
 
     if (error) {
@@ -76,7 +76,7 @@ export async function signup(req, res) {
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '7d', algorithm: 'HS256' }
     );
 
     // Log successful signup
@@ -112,8 +112,7 @@ export async function signup(req, res) {
     });
 
     res.status(500).json({
-      error: 'Failed to create account',
-      message: error.message
+      error: 'Failed to create account'
     });
   }
 }
@@ -176,7 +175,7 @@ export async function login(req, res) {
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '7d', algorithm: 'HS256' }
     );
 
     // Log successful login
@@ -212,8 +211,7 @@ export async function login(req, res) {
     });
 
     res.status(500).json({
-      error: 'Failed to login',
-      message: error.message
+      error: 'Failed to login'
     });
   }
 }
@@ -225,8 +223,7 @@ export async function logout(req, res) {
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({
-      error: 'Failed to logout',
-      message: error.message
+      error: 'Failed to logout'
     });
   }
 }
@@ -245,8 +242,7 @@ export async function getCurrentUser(req, res) {
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({
-      error: 'Failed to get user',
-      message: error.message
+      error: 'Failed to get user'
     });
   }
 }

@@ -294,8 +294,8 @@ export async function getQuizById(req, res) {
       });
     }
 
-    // Check if user owns this quiz
-    if (userId && quiz.user_id !== userId) {
+    // Shared quizzes are served by share token. Direct id lookup is owner-only.
+    if (!userId || quiz.user_id !== userId) {
       return res.status(403).json({
         error: 'Access denied'
       });
@@ -439,8 +439,7 @@ export async function getSharedQuiz(req, res) {
     if (error) {
       console.error('Database error fetching shared quiz:', error.message);
       return res.status(404).json({
-        error: 'Shared quiz not found or no longer available',
-        details: error.message
+        error: 'Shared quiz not found or no longer available'
       });
     }
 
